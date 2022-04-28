@@ -51,10 +51,38 @@ def main():
     lt3 = lat - f_lt/2
     ln3 = lon + f_ln/2
     lt4 = lat + f_lt/2
-    ln4 = lon + f_ln/2    
+    ln4 = lon + f_ln/2
 
-    wsn, sn, uu, vv, pr, t2 = getModelData(datai, dataf, lt1, lt2)
+    lats = [lt1, lt2, lt3, lt4]
+    lons = [ln1, ln2, ln3, ln4]    
+
+    wsn = []
+    sn = []
+    uu = []
+    vv = []
+    pr = []
+    t2 = []
+    for lt, ln in zip(lats, lons):
+      wsn1, sn1, uu1, vv1, pr1, t2_1 = getModelData(datai, dataf, lt, ln)
+      wsn.append(wsn1)
+      sn.append(sn1)
+      uu.append(uu1)
+      vv.append(vv1)
+      pr.append(pr1)
+      t2.append(t2_1)
     
+    wsn = xr.combine_nested(wsn, concat_dim=['Time']).mean(axis=0)
+    sn = xr.combine_nested(sn, concat_dim=['Time']).mean(axis=0)
+    uu = xr.combine_nested(uu, concat_dim=['Time']).mean(axis=0)
+    vv = xr.combine_nested(vv, concat_dim=['Time']).mean(axis=0)
+    pr = xr.combine_nested(pr, concat_dim=['Time']).mean(axis=0)
+    t2 = xr.combine_nested(t2, concat_dim=['Time']).mean(axis=0)
+    ws = np.sqrt(np.power(uu,2) + np.power(vv,2))
+
+    # Do stuff
+    # Distribution of the wind, temperature, precipitation
+
+    # See the script that generate the nice plots, to generate them again. This time with the amount of snow.
     
     sys.exit()
 
