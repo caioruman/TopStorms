@@ -10,6 +10,8 @@ from metpy.units import units
 from metpy.units import pandas_dataframe_to_unit_arrays
 import metpy.calc as mpcalc
 from glob import glob
+import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
 
 def main():
 
@@ -34,8 +36,8 @@ def main():
     
     datai = datetime(row[1], row[2], row[3], 0)
     dataf = datai + relativedelta(hours=48)
-    lat=row[10]
-    lon=row[11]
+    lat=float(row[10])
+    lon=float(row[11])
 
     # check if the string do not have snow in it (lowercase)
     if not 'snow' in row[4].lower():
@@ -71,18 +73,68 @@ def main():
       pr.append(pr1)
       t2.append(t2_1)
     
-    wsn = xr.combine_nested(wsn, concat_dim=['Time']).mean(axis=0)
-    sn = xr.combine_nested(sn, concat_dim=['Time']).mean(axis=0)
-    uu = xr.combine_nested(uu, concat_dim=['Time']).mean(axis=0)
-    vv = xr.combine_nested(vv, concat_dim=['Time']).mean(axis=0)
-    pr = xr.combine_nested(pr, concat_dim=['Time']).mean(axis=0)
-    t2 = xr.combine_nested(t2, concat_dim=['Time']).mean(axis=0)
+    wsn = xr.combine_nested(wsn, concat_dim=['south_north']).mean(axis=0)
+    sn = xr.combine_nested(sn, concat_dim=['south_north']).mean(axis=0)
+    uu = xr.combine_nested(uu, concat_dim=['south_north']).mean(axis=0)
+    vv = xr.combine_nested(vv, concat_dim=['south_north']).mean(axis=0)
+    pr = xr.combine_nested(pr, concat_dim=['south_north']).mean(axis=0)
+    t2 = xr.combine_nested(t2, concat_dim=['south_north']).mean(axis=0)
     ws = np.sqrt(np.power(uu,2) + np.power(vv,2))
 
     # Do stuff
     # Distribution of the wind, temperature, precipitation
 
+    # wind
+    bin_wind = np.arange(0,21,1)
+    ws_hist, _ = np.histogram(ws, bin_wind)
+    # temp
+    bin_t2 = np.arange(-30,31,2)
+    t2_hist, _ = np.histogram(t2, bin_t2)
+
+    # precip
+    bin_pr = np.arange(0,20,1)
+    pr_hist, _ = np.histogram(pr, bin_pr)
+    total_pr = np.sum(pr)
+    
+    # wsn
+    bin_wsn = np.arange(0,20,1)
+    wsn_hist, _ = np.histogram(wsn, bin_pr)
+    total_wsn = np.sum(wsn)
+
+    # sn
+    bin_sn = np.arange(0,20,1)
+    sn_hist, _ = np.histogram(sn, bin_pr)
+    total_sn = np.sum(sn)
+
     # See the script that generate the nice plots, to generate them again. This time with the amount of snow.
+
+    # Plot the histograms and the nice plots.
+    # 2 x 4 image. 2 x 2 histogram; 2 x 2 the nice image
+    fig, axs = plt.subplot_mosaic([['a)', 'b)'], ['c)', 'd)'], ['e)', 'e)'], ['e)', 'e)']],
+                              constrained_layout=True, figsize=(10, 14))
+    for label, ax in axs.items():
+    # label physical distance in and down:
+      trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+      ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+            fontsize='18', va='bottom', fontfamily='serif')
+
+      plt.suptitle('Change the title here', fontsize=20)
+
+      if label == 'a)':
+        ax.bar(bin_wind[:-1], ws_hist)
+        ax.set_title('Wind Distribution', fontsize=18)
+      if label == 'b)':
+        ax.bar(bin_t2[:-1], t2_hist)
+        ax.set_title('Temperature Distribution', fontsize=18)
+      if label == 'c)':
+        ax.bar(bin_wsn[:-1], wsn_hist)
+        ax.set_title('Wetsnow Distribution', fontsize=18)
+      if label == 'd)':
+        ax.bar(bin_sn[:-1], sn_hist)
+        ax.set_title('Snow Distribution', fontsize=18)
+      if label == 'e)':
+        # plot the nice plot
+        print('oi')
     
     sys.exit()
 
